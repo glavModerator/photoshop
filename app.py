@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import (
 from qss import QSS
 import os
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+from PIL import Image
 
 app = QApplication([])
 win = QWidget()
@@ -74,7 +77,54 @@ def showFilenamesList():
         for filename in filenames:
                 lw_files.addItem(filename)
 
-btn_dir.clicked.connect(showFilenamesList)
-app.exec()
 
+class ImageProcessor:
+        def __init__(self):
+                self.image = None
+                self.dir = None
+                self.filename = None
+                self.save_dir = "Modified/"
+
+        def loadImage(self, dir, filename):
+                self.dir = dir
+                self.filename = filename
+                image_path = os.path.join(dir, filename)
+                self.image  = Image.open(image_path)
+
+        def saveImage(self):
+                path = os.path.join(self.dir, self.save_dir)
+                if  not (os.path.exists(path) or os.path.isdir(path)):
+                        os.mkdir(path)
+                image_path = os.path.join(path, self.filename)
+                self.image.save(image_path)
+
+        def saveImage(self, path):
+                lb_image.hide()
+                pixmapimage = QPixmap(path)
+                w, h = lb_image.width(), lb_image.height()
+                pixmapimage = pixmapimage.scaled(w, h, Qt.KeepAspectRatio)
+                lb_image.setPixmap(pixmapimage)
+                lb_image.show()
+        def do_bw(self):
+                self.image = self.image.convert("L")
+                self.saveImage()
+                image_path = os.path.join(self.dir, self.save_dir, self.filename)
+                self.showImage(image_path)
+
+
+def showChosenImage():
+        if lw_files.currentRow() >= 0:
+                filename = lw_files.currentItem()
+                workimage.loadImage(workdir, filename)
+                image_path = os.path.join(workimage, dir, workimage.filename)
+                workimage.showImage(image_path)
+
+btn_dir.clicked.connect(showFilenamesList)
+
+workimage = ImageProcessor()
+
+
+lw_files.currentRowChanged.connect(showChosenImage)
+btn_bw.clicked.connect(workimage.do_bw)
+app.exec()
 
